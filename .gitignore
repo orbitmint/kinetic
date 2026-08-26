@@ -1,0 +1,18 @@
+# Rust
+/target
+**/*.rs.bk
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.*
+!.env.example
