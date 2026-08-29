@@ -302,3 +302,78 @@ fn parse_tuple_data(buf: &mut Bytes, cols: &[ColumnInfo]) -> Vec<(String, Option
     values
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use bytes::{BufMut, BytesMut};
+
+    #[test]
+    fn test_decode_relation_and_insert() {
+        let mut decoder = PgOutputDecoder::new();
+
+        // 1. Construct Relation 'R' message
+        let mut r_buf = BytesMut::new();
+        r_buf.put_u8(b'R');
+        r_buf.put_u32(16384); // relation_id
+        r_buf.put_slice(b"public\0"); // namespace
+        r_buf.put_slice(b"users\0"); // name
+        r_buf.put_u8(b'd'); // replica_identity
+        r_buf.put_u16(3); // 3 columns
+
+        // col 0: id (INT8 = 20)
+        r_buf.put_u8(1); // key flag
+        r_buf.put_slice(b"id\0");
+        r_buf.put_u32(OID_INT8);
+        r_buf.put_i32(-1);
+
+        // col 1: name (VARCHAR = 1043)
+        r_buf.put_u8(0);
+        r_buf.put_slice(b"name\0");
+        r_buf.put_u32(OID_VARCHAR);
+        r_buf.put_i32(255);
+
+        // col 2: active (BOOL = 16)
+        r_buf.put_u8(0);
+        r_buf.put_slice(b"active\0");
+        r_buf.put_u32(OID_BOOL);
+        r_buf.put_i32(-1);
+
+        let parsed_r = decoder.decode(r_buf.freeze());
+        assert!(matches!(parsed_r, Some(ParsedMessage::Relation(_))));
+
+        // 2. Construct Insert 'I' message
+        let mut i_buf = BytesMut::new();
+        i_buf.put_u8(b'I');
+        i_buf.put_u32(16384);
+        i_buf.put_u8(b'N'); // New tuple marker
+        i_buf.put_u16(3); // 3 columns
+
+        // col 0: id = "1001"
+        i_buf.put_u8(b't');
+        i_buf.put_u32(4);
+        i_buf.put_slice(b"1001");
+
+        // col 1: name = "Alice"
+        i_buf.put_u8(b't');
+        i_buf.put_u32(5);
+        i_buf.put_slice(b"Alice");
+
+        // col 2: active = "t"
+        i_buf.put_u8(b't');
+        i_buf.put_u32(1);
+        i_buf.put_slice(b"t");
+
+        let parsed_i = decoder.decode(i_buf.freeze());
+        match parsed_i {
+            Some(ParsedMessage::Insert { relation_id, new_row }) => {
+                assert_eq!(relation_id, 16384);
+                assert_eq!(new_row.table_name, "users");
+                assert_eq!(new_row.columns.len(), 3);
+                assert_eq!(new_row.columns[0], ("id".to_string(), Some("1001".to_string())));
+                assert_eq!(new_row.columns[1], ("name".to_string(), Some("Alice".to_string())));
+                assert_eq!(new_row.columns[2], ("active".to_string(), Some("t".to_string())));
+            }
+            _ => panic!("Expected ParsedMessage::Insert"),
+        }
+    }
+}
