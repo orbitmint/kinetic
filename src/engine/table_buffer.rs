@@ -206,3 +206,66 @@ impl TableBuffer {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use arrow::array::{Array, AsArray};
+    use arrow_schema::Field;
+
+    #[test]
+    fn test_table_buffer_append_and_flush() {
+        let schema = Arc::new(Schema::new(vec![
+            Field::new("_cdc_op", DataType::Utf8, false),
+            Field::new("_cdc_lsn", DataType::Int64, false),
+            Field::new("_cdc_ts", DataType::Int64, false),
+            Field::new("id", DataType::Int64, true),
+            Field::new("username", DataType::Utf8, true),
+            Field::new("enabled", DataType::Boolean, true),
+        ]));
+
+        let mut buf = TableBuffer::new("accounts", schema);
+
+        // Append 1: Insert
+        buf.append(
+            "INSERT",
+            50001,
+            &[
+                ("id".to_string(), Some("101".to_string())),
+                ("username".to_string(), Some("orbitmint".to_string())),
+                ("enabled".to_string(), Some("true".to_string())),
+            ],
+        );
+
+        // Append 2: Update with missing enabled field (schema evolution / partial column)
+        buf.append(
+            "UPDATE",
+            50002,
+            &[
+                ("id".to_string(), Some("101".to_string())),
+                ("username".to_string(), Some("orbitmint_updated".to_string())),
+            ],
+        );
+
+        assert_eq!(buf.len(), 2);
+
+        let (batch, flushed_lsn) = buf.flush().unwrap();
+        assert_eq!(flushed_lsn, 50002);
+        assert_eq!(batch.num_rows(), 2);
+        assert_eq!(batch.num_columns(), 6);
+
+        // Check values in column 0 (_cdc_op)
+        let op_col = batch.column(0).as_string::<i32>();
+        assert_eq!(op_col.value(0), "INSERT");
+        assert_eq!(op_col.value(1), "UPDATE");
+
+        // Check values in column 3 (id)
+        let id_col = batch.column(3).as_primitive::<arrow::datatypes::Int64Type>();
+        assert_eq!(id_col.value(0), 101);
+        assert_eq!(id_col.value(1), 101);
+
+        // Check values in column 5 (enabled)
+        let enabled_col = batch.column(5).as_boolean();
+        assert_eq!(enabled_col.value(0), true);
+        assert!(enabled_col.is_null(1)); // Partial column was correctly mapped to null!
+    }
+}
