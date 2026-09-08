@@ -66,3 +66,31 @@ impl ParquetUploader {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use arrow::array::{Int64Array, StringArray};
+    use arrow::datatypes::{DataType, Field, Schema};
+    use object_store::memory::InMemory;
+
+    #[tokio::test]
+    async fn test_parquet_writer_and_upload() {
+        let store = Arc::new(InMemory::new());
+        let uploader = ParquetUploader::new(store, "test_data".to_string());
+
+        let schema = Arc::new(Schema::new(vec![
+            Field::new("id", DataType::Int64, false),
+            Field::new("name", DataType::Utf8, false),
+        ]));
+
+        let id_array = Arc::new(Int64Array::from(vec![1, 2, 3]));
+        let name_array = Arc::new(StringArray::from(vec!["Alice", "Bob", "Charlie"]));
+
+        let batch = RecordBatch::try_new(schema, vec![id_array, name_array]).unwrap();
+
+        let result = uploader.write_and_upload(batch).await.unwrap();
+        assert_eq!(result.record_count, 3);
+        assert!(result.file_size_bytes > 0);
+        assert!(result.file_uri.starts_with("s3://test_data/"));
+    }
+}
