@@ -91,3 +91,51 @@ pub fn pg_oid_to_arrow_type(oid: u32) -> DataType {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::cdc::pgoutput::ColumnInfo;
+
+    #[test]
+    fn test_register_relation() {
+        let mut registry = SchemaRegistry::new();
+        let relation = RelationMetadata {
+            relation_id: 100,
+            namespace: "public".to_string(),
+            name: "customers".to_string(),
+            replica_identity: b'd',
+            columns: vec![
+                ColumnInfo {
+                    flags: 1,
+                    name: "customer_id".to_string(),
+                    type_oid: 20, // INT8
+                    atttypmod: -1,
+                },
+                ColumnInfo {
+                    flags: 0,
+                    name: "full_name".to_string(),
+                    type_oid: 1043, // VARCHAR
+                    atttypmod: 255,
+                },
+                ColumnInfo {
+                    flags: 0,
+                    name: "is_active".to_string(),
+                    type_oid: 16, // BOOL
+                    atttypmod: -1,
+                },
+            ],
+        };
+
+        let schema = registry.register_relation(&relation);
+        assert_eq!(schema.fields().len(), 6); // 3 metadata fields + 3 table columns
+        assert_eq!(schema.field(0).name(), "_cdc_op");
+        assert_eq!(schema.field(1).name(), "_cdc_lsn");
+        assert_eq!(schema.field(2).name(), "_cdc_ts");
+        assert_eq!(schema.field(3).name(), "customer_id");
+        assert_eq!(schema.field(3).data_type(), &DataType::Int64);
+        assert_eq!(schema.field(4).name(), "full_name");
+        assert_eq!(schema.field(4).data_type(), &DataType::Utf8);
+        assert_eq!(schema.field(5).name(), "is_active");
+        assert_eq!(schema.field(5).data_type(), &DataType::Boolean);
+    }
+}
