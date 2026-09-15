@@ -195,3 +195,82 @@ impl MultiTableBuffer {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::telemetry::init_telemetry;
+    use object_store::memory::InMemory;
+
+    #[tokio::test]
+    async fn test_multi_table_buffering_and_metrics() {
+        let store = Arc::new(InMemory::new());
+        let uploader = Arc::new(ParquetUploader::new(store, "cdc_warehouse".to_string()));
+        let committer = Arc::new(
+            IcebergCommitter::new("http://localhost:8181", "default", "kinetic_table")
+                .await
+                .unwrap(),
+        );
+        let metrics = init_telemetry().unwrap();
+        let (ack_tx, mut ack_rx) = mpsc::channel(10);
+
+        // Threshold = 2 rows per batch
+        let mut multi = MultiTableBuffer::new(2, 500, uploader, committer, metrics.clone(), ack_tx);
+
+        // Send 2 events for table "orders" -> triggers immediate flush of "orders"
+        multi
+            .process_event(ChangeEvent::Insert {
+                table: "orders".to_string(),
+                values: vec![
+                    ("id".to_string(), Some("1".to_string())),
+                    ("data".to_string(), Some("Order 1".to_string())),
+                ],
+                position: crate::cdc::events::StreamPosition::Lsn(101),
+            })
+            .await;
+
+        multi
+            .process_event(ChangeEvent::Insert {
+                table: "orders".to_string(),
+                values: vec![
+                    ("id".to_string(), Some("2".to_string())),
+                    ("data".to_string(), Some("Order 2".to_string())),
+                ],
+                position: crate::cdc::events::StreamPosition::Lsn(102),
+            })
+            .await;
+
+        // Also send 1 event for table "products" (remains buffered until flush_all)
+        multi
+            .process_event(ChangeEvent::Insert {
+                table: "products".to_string(),
+                values: vec![
+                    ("id".to_string(), Some("99".to_string())),
+                    ("name".to_string(), Some("Gadget".to_string())),
+                ],
+                position: crate::cdc::events::StreamPosition::Lsn(201),
+            })
+            .await;
+
+        // Verify "orders" flushed and acknowledged LSN 102
+        let ack1 = tokio::time::timeout(Duration::from_millis(1000), ack_rx.recv())
+            .await
+            .expect("Timeout waiting for orders ack")
+            .expect("Expected acked LSN");
+        assert_eq!(ack1, 102);
+
+        // Flush remaining buffers ("products")
+        multi.flush_all().await;
+
+        let ack2 = tokio::time::timeout(Duration::from_millis(1000), ack_rx.recv())
+            .await
+            .expect("Timeout waiting for products ack")
+            .expect("Expected acked LSN");
+        assert_eq!(ack2, 201);
+
+        // Check OpenTelemetry metrics output
+        let prom_metrics = metrics.encode_metrics().unwrap();
+        assert!(prom_metrics.contains("kinetic_cdc_events"));
+        assert!(prom_metrics.contains("orders"));
+        assert!(prom_metrics.contains("products"));
+    }
+}
