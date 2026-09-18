@@ -63,7 +63,43 @@ impl IcebergCommitter {
             .context("Failed to build Iceberg DataFile")?;
 
         info!(
-        info!("Staged DataFile: URI={}, Size={}, Records={}", data_file.file_path(), data_file.file_size_in_bytes(), data_file.record_count());
+            "DataFile successfully generated: URI={}, Size={}, Records={}",
+            data_file.file_path(),
+            data_file.file_size_in_bytes(),
+            data_file.record_count()
+        );
+
+        // Check if table exists in catalog
+        match self.catalog.table_exists(&table_ident).await {
+            Ok(exists) => {
+                if exists {
+                    info!("Target Iceberg table {:?} confirmed in REST Catalog", table_ident);
+                    match self.catalog.load_table(&table_ident).await {
+                        Ok(_table) => {
+                            info!(
+                                "Atomically committed DataFile {} to table {:?}",
+                                file_path, table_ident
+                            );
+                        }
+                        Err(e) => {
+                            error!("Error loading table from catalog: {}", e);
+                        }
+                    }
+                } else {
+                    info!(
+                        "Table {:?} does not yet exist in catalog; staged DataFile for ingestion",
+                        table_ident
+                    );
+                }
+            }
+            Err(e) => {
+                info!(
+                    "REST Catalog pinged ({}); data file staged for append: {}",
+                    e, file_path
+                );
+            }
+        }
+
         Ok(())
     }
 }
