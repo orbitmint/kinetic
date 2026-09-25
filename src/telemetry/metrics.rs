@@ -137,3 +137,23 @@ pub async fn start_metrics_server(metrics: KineticMetrics, addr: SocketAddr) -> 
     Ok(())
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_metrics_collection_and_prometheus_export() {
+        let metrics = init_telemetry().unwrap();
+        metrics.record_event("INSERT", "users");
+        metrics.record_event("UPDATE", "orders");
+        metrics.record_replication_lag(1024);
+        metrics.record_parquet_upload("users", 20480);
+        metrics.record_commit_duration("users", 0.045);
+
+        let output = metrics.encode_metrics().unwrap();
+        assert!(output.contains("kinetic_cdc_events"), "Expected cdc_events metric in: {}", output);
+        assert!(output.contains("kinetic_replication_lag_bytes"), "Expected lag metric in: {}", output);
+        assert!(output.contains("kinetic_parquet_bytes_uploaded"), "Expected parquet upload metric in: {}", output);
+        assert!(output.contains("kinetic_iceberg_commit_duration_seconds"), "Expected commit duration metric in: {}", output);
+    }
+}
