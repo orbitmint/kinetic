@@ -5,7 +5,7 @@ mod engine;
 mod telemetry;
 
 use crate::catalog::iceberg_rest::IcebergCommitter;
-use crate::cdc::WalStream;
+use crate::cdc::{MongoChangeStream, MysqlBinlogStream, WalStream};
 use crate::config::Config;
 use crate::engine::multi_table_buffer::MultiTableBuffer;
 use crate::engine::parquet_writer::ParquetUploader;
@@ -66,6 +66,8 @@ async fn main() -> anyhow::Result<()> {
         let wal_metrics = metrics.clone();
 
         tokio::spawn(async move {
+            match source_type.as_str() {
+                "postgres" | "postgresql" => {
                     info!("Connecting to PostgreSQL logical replication...");
                     match WalStream::new(&config.pg_url, &config.pg_slot, &config.pg_publication).await {
                         Ok(mut wal_stream) => {
@@ -78,6 +80,22 @@ async fn main() -> anyhow::Result<()> {
                         }
                         Err(e) => tracing::error!("Failed to connect to PostgreSQL: {:?}", e),
                     }
+                }
+                "mysql" => {
+                    info!("Connecting to MySQL binlog stream...");
+                    let mut mysql_stream = MysqlBinlogStream::new(&config.mysql_url);
+                    if let Err(e) = mysql_stream.start_stream(event_tx, ack_rx).await {
+                        tracing::error!("MySQL replication stream stopped: {:?}", e);
+                    }
+                }
+                "mongo" | "mongodb" => {
+                    info!("Connecting to MongoDB change stream...");
+                    let mut mongo_stream = MongoChangeStream::new(&config.mongo_uri, &config.mongo_db);
+                    if let Err(e) = mongo_stream.start_stream(event_tx, ack_rx).await {
+                        tracing::error!("MongoDB change stream stopped: {:?}", e);
+                    }
+                }
+                unknown => {
                     tracing::error!("Unsupported CDC source: '{}' (supported: postgres, mysql, mongo)", unknown);
                 }
             }

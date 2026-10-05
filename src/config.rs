@@ -30,20 +30,28 @@ pub struct Config {
     // Engine Buffering Thresholds
     #[arg(long, env = "MAX_BATCH_SIZE", default_value_t = 5000)]
     pub max_batch_size: usize,
-    #[arg(long, env = "MAX_BATCH_SIZE", default_value_t = 5000)]
-    pub max_batch_size: usize,
+
     #[arg(long, env = "MAX_BATCH_TIMEOUT_MS", default_value_t = 500)]
     pub max_batch_timeout_ms: u64,
+
+    // Storage Options
     #[arg(long, env = "S3_BUCKET", default_value = "warehouse")]
     pub s3_bucket: String,
+
     #[arg(long, env = "S3_PREFIX", default_value = "kinetic_data")]
     pub s3_prefix: String,
+
+    // Iceberg Options
     #[arg(long, env = "ICEBERG_REST_URL", default_value = "http://localhost:8181")]
     pub iceberg_rest_url: String,
+    
     #[arg(long, env = "ICEBERG_NAMESPACE", default_value = "default")]
     pub iceberg_namespace: String,
+
     #[arg(long, env = "ICEBERG_TABLE", default_value = "kinetic_table")]
     pub iceberg_table: String,
+
+    // Observability Options
     #[arg(long, env = "METRICS_ADDR", default_value = "0.0.0.0:9090")]
     pub metrics_addr: std::net::SocketAddr,
 }
