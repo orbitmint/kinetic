@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kinetic — Sub-second CDC into Apache Iceberg in a Single Binary</title>
+  <meta name="description" content="Ultra-lightweight Rust CDC engine streaming PostgreSQL, MySQL, and MongoDB directly into Apache Iceberg REST Catalogs with 50MB RAM and zero external message brokers.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Navigation -->
+  <header>
+    <div class="container">
+      <nav class="navbar">
+        <a href="#" class="brand">
+          <span>⚡ Kinetic</span>
+          <span class="brand-badge">v0.1.0</span>
+        </a>
+        <div class="nav-links">
+          <a href="#features" class="nav-link">Features</a>
+          <a href="#architecture" class="nav-link">Architecture</a>
+          <a href="#quickstart" class="nav-link">Quickstart</a>
+          <a href="https://github.com/orbitmint/kinetic" class="btn btn-secondary" target="_blank" rel="noopener">
+            GitHub
+          </a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="container">
+        <span class="hero-tag">Zero JVM • Zero Kafka • 50MB RAM</span>
+        <h1>Stream Database Changes to Iceberg.<br>Instantly.</h1>
+        <p>
+          A single native Rust binary that streams WAL and Binlogs directly into Apache Iceberg REST Catalogs with sub-second commit latency.
+        </p>
+        <div class="hero-actions">
+          <a href="#quickstart" class="btn btn-primary">Get Started in 2 Mins</a>
+          <a href="https://github.com/orbitmint/kinetic" class="btn btn-secondary" target="_blank" rel="noopener">Star on GitHub ⭐</a>
+        </div>
+
+        <!-- Terminal Window Preview -->
+        <div class="terminal-card">
+          <div class="terminal-header">
+            <div class="terminal-dots">
+              <span class="dot dot-red"></span>
+              <span class="dot dot-yellow"></span>
+              <span class="dot dot-green"></span>
+            </div>
+            <span class="terminal-title">bash — kinetic-daemon</span>
+          </div>
+          <div class="terminal-body">
+            <div class="terminal-line"><span class="t-prompt">$ </span><span class="t-cmd">kinetic</span> --cdc-source postgres --iceberg-rest-url http://catalog:8181</div>
+            <div class="terminal-line t-dim">2026-10-12T12:00:00Z  INFO Starting Kinetic CDC Engine (v0.1.0)</div>
+            <div class="terminal-line t-cyan">2026-10-12T12:00:00Z  INFO OpenTelemetry Prometheus metrics exporter listening on http://0.0.0.0:9090/metrics</div>
+            <div class="terminal-line t-dim">2026-10-12T12:00:01Z  INFO Connected and streaming logical replication from slot 'kinetic_slot'...</div>
+            <div class="terminal-line t-green">2026-10-12T12:00:01Z  INFO Flushing 5,000 rows for table 'users' (LSN: 0/16B2490)</div>
+            <div class="terminal-line t-green">2026-10-12T12:00:01Z  INFO Uploaded Parquet to s3://warehouse/kinetic_data/users/4a7f-9b2c.parquet (142 KB)</div>
+            <div class="terminal-line t-green">2026-10-12T12:00:01Z  INFO Committed DataFile to Iceberg table 'default.users' in 0.042s</div>
+            <div class="terminal-line t-cyan">2026-10-12T12:00:01Z  INFO Acknowledged flushed LSN to PostgreSQL walsender (Replication lag: 0 bytes)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Architecture Comparison -->
+    <section class="comparison-section" id="architecture">
+      <div class="container">
+        <div class="section-header">
+          <h2>The Zero-Middleware Advantage</h2>
+          <p>Traditional CDC stacks require high operational overhead and multi-hop latency. Kinetic collapses the pipe directly into the engine.</p>
+        </div>
+
+        <div class="arch-compare-grid">
+          <!-- The Heavy Way -->
+          <div class="arch-card">
+            <span class="arch-badge badge-heavy">The Status Quo</span>
+            <h3>Debezium + Kafka + Connect</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted);">
+              Multiple distributed systems, ZooKeeper/KRaft, Java garbage collection pauses, and multi-hop serialization.
+            </p>
+            <div class="arch-stats">
+              <div class="stat-item">
+                <span class="stat-val">4 - 16 GB</span>
+                <span class="stat-label">Memory</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-val">5 - 30s</span>
+                <span class="stat-label">Latency</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-val">$1,500+/mo</span>
+                <span class="stat-label">Baseline Cost</span>
+              </div>
+            </div>
+            <div class="arch-flow">
+              Postgres ➔ Debezium ➔ Kafka Connect ➔ Kafka Brokers ➔ Iceberg Sink ➔ S3
+            </div>
+          </div>
+
+          <!-- Kinetic Way -->
+          <div class="arch-card highlight">
+            <span class="arch-badge badge-light">The Kinetic Way</span>
+            <h3>Single Rust Binary</h3>
+            <p style="font-size: 0.9rem; color: var(--text-muted);">
+              Streams binary changes directly into contiguous Arrow memory and commits byte-aligned Parquet chunks immediately.
+            </p>
+            <div class="arch-stats">
+              <div class="stat-item">
+                <span class="stat-val" style="color: var(--accent-mint);">~50 MB</span>
+                <span class="stat-label">Memory</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-val" style="color: var(--accent-mint);">&lt; 500ms</span>
+                <span class="stat-label">Latency</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-val" style="color: var(--accent-mint);">$5/mo</span>
+                <span class="stat-label">Baseline Cost</span>
+              </div>
+            </div>
+            <div class="arch-flow" style="background: #ffffff; border: 1px solid var(--border-strong);">
+              Postgres / MySQL / Mongo ➔ <b>Kinetic (In-Memory Arrow)</b> ➔ S3 / Iceberg
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section class="features-section" id="features">
+      <div class="container">
+        <div class="section-header">
+          <h2>Engineered for Modern Lakehouses</h2>
+          <p>Everything you need for enterprise change data capture, built directly into the core.</p>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-card">
+            <div class="feature-icon">🔌</div>
+            <h3>Multi-Source CDC</h3>
+            <p>Connect natively to PostgreSQL (<code>pgoutput</code>), MySQL (Binlog RBR), and MongoDB (Change Streams) with automatic schema translation.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">🏹</div>
+            <h3>Zero-Copy Arrow Buffering</h3>
+            <p>Tuple records are parsed straight into native Apache Arrow columnar vectors in-memory without JSON serialization overhead.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">📦</div>
+            <h3>Byte-Aligned Parquet</h3>
+            <p>Directly encodes compressed Snappy Parquet files and streams them into AWS S3, MinIO, or Cloudflare R2 object storage.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">🧊</div>
+            <h3>Atomic Iceberg REST Commits</h3>
+            <p>Generates Iceberg DataFile metadata and performs atomic snapshot commits to Unity Catalog, Snowflake Horizon, or Tabulario.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">🛡️</div>
+            <h3>Schema Drift Protection</h3>
+            <p>Gracefully adapts to upstream table alterations by soft-logging differences and appending nulls without dropping in-flight data.</p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-icon">📈</div>
+            <h3>Native OpenTelemetry</h3>
+            <p>Embedded Prometheus endpoint on <code>:9090/metrics</code> tracking replication lag, throughput rates, and Iceberg commit latencies.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quickstart Section -->
+    <section class="cta-section" id="quickstart">
+      <div class="container">
+        <h2>Ready to Stream in 2 Minutes?</h2>
+        <p>Spin up the sample test stack with Docker Compose and experience sub-second Iceberg CDC on your laptop.</p>
+        
+        <div style="max-width: 650px; margin: 0 auto 28px; text-align: left;">
+          <div class="terminal-card">
+            <div class="terminal-header">
+              <span class="terminal-title">quickstart.sh</span>
+            </div>
+            <div class="terminal-body" style="font-size: 0.85rem;">
+              <div class="terminal-line"><span class="t-dim"># 1. Clone the repo and start test services</span></div>
+              <div class="terminal-line"><span class="t-prompt">$ </span><span class="t-cmd">git clone https://github.com/orbitmint/kinetic.git && cd kinetic</span></div>
+              <div class="terminal-line"><span class="t-prompt">$ </span><span class="t-cmd">docker compose up -d</span></div>
+              <div class="terminal-line"><span class="t-dim"># 2. Seed test table</span></div>
+              <div class="terminal-line"><span class="t-prompt">$ </span><span class="t-cmd">docker compose exec -T postgres psql -U admin -d kinetic_db &lt; scripts/setup_test_db.sql</span></div>
+              <div class="terminal-line"><span class="t-dim"># 3. Launch Kinetic</span></div>
+              <div class="terminal-line"><span class="t-prompt">$ </span><span class="t-cmd">cargo run</span></div>
+            </div>
+          </div>
+        </div>
+
+        <a href="https://github.com/orbitmint/kinetic" class="btn btn-primary" target="_blank" rel="noopener">Explore the GitHub Repository</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>© 2026 Kinetic Project. Released under the Apache 2.0 License.</p>
+    </div>
+  </footer>
+
+</body>
+</html>
