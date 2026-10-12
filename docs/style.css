@@ -190,7 +190,7 @@ body {
   background: var(--code-bg);
   border: 1px solid rgba(22, 101, 52, 0.25);
   border-radius: var(--radius-md);
-  box-shadow: 0 12px 36px rgba(11, 23, 17, 0.18);
+  box-shadow: 0 14px 40px rgba(11, 23, 17, 0.22);
   overflow: hidden;
   text-align: left;
 }
