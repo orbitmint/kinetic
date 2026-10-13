@@ -1,6 +1,8 @@
 <div align="center">
 
-# ⚡ Kinetic
+<img src="docs/logo.svg" alt="Kinetic Logo" width="84" height="84" style="border-radius: 18px;" />
+
+# Kinetic
 
 **Sub-second Change Data Capture (CDC) into Apache Iceberg in a single native Rust binary.**
 
@@ -8,7 +10,7 @@
 [![Rust](https://img.shields.io/badge/rust-stable-brightgreen.svg)](https://www.rust-lang.org/)
 [![Iceberg](https://img.shields.io/badge/Apache%20Iceberg-0.3.0-orange.svg)](https://iceberg.apache.org/)
 
-*Stream changes from PostgreSQL, MySQL, and MongoDB directly to Apache Iceberg REST Catalogs (Unity Catalog, Snowflake Horizon, Tabulario) with 50MB RAM and zero external message brokers.*
+*Stream changes from PostgreSQL, MySQL, and MongoDB directly to Apache Iceberg REST Catalogs (Unity Catalog, Snowflake Horizon, Tabulario) with a lightweight footprint and zero external message brokers.*
 
 [Features](#-key-features) • [Why Kinetic?](#-why-kinetic) • [Quickstart](#-quickstart-in-2-minutes) • [Architecture](#-architecture) • [Documentation](https://orbitmint.github.io/kinetic)
 
@@ -29,7 +31,7 @@ Postgres WAL ──► Debezium ──► Kafka Connect ──► Kafka Brokers 
 ```text
 The Kinetic Way:
 Postgres WAL / MySQL Binlog / Mongo Stream ──► [ Kinetic (Single Rust Binary) ] ──► S3 / Iceberg
-(50MB RAM, sub-second latency, zero intermediate queues)
+(~35–80MB typical RAM, sub-second latency, zero intermediate queues)
 ```
 
 ---

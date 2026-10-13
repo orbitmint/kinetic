@@ -4,15 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kinetic — Sub-second CDC into Apache Iceberg in a Single Binary</title>
-  <meta name="description" content="Ultra-lightweight Rust CDC engine streaming PostgreSQL, MySQL, and MongoDB directly into Apache Iceberg REST Catalogs with 50MB RAM and zero external message brokers.">
+  <meta name="description" content="Ultra-lightweight Rust CDC engine streaming PostgreSQL, MySQL, and MongoDB directly into Apache Iceberg REST Catalogs with sub-100MB footprint and zero external message brokers.">
   
   <!-- OpenGraph Meta Tags -->
   <meta property="og:title" content="Kinetic — Sub-second CDC into Apache Iceberg">
-  <meta property="og:description" content="Single native Rust binary streaming PostgreSQL, MySQL, and MongoDB directly into Iceberg REST Catalogs with ~50MB RAM.">
+  <meta property="og:description" content="Single native Rust binary streaming PostgreSQL, MySQL, and MongoDB directly into Iceberg REST Catalogs with sub-100MB footprint.">
   <meta property="og:url" content="https://orbitmint.github.io/kinetic/">
   <meta property="og:type" content="website">
 
-  <link rel="stylesheet" href="style.css?v=20261013-2">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="style.css?v=20261013-4">
   <style>
     /* Critical sticky navbar styles to guarantee sticky behavior across all browsers */
     header {
@@ -53,7 +54,8 @@
     <div class="container">
       <nav class="navbar">
         <a href="#" class="brand">
-          <span>⚡ Kinetic</span>
+          <img src="logo.svg" alt="Kinetic Logo" width="28" height="28" style="border-radius: 6px; vertical-align: middle;">
+          <span>Kinetic</span>
           <span class="brand-badge">v0.1.0</span>
         </a>
         <div class="nav-links">
@@ -73,7 +75,7 @@
     <!-- Hero Section -->
     <section class="hero">
       <div class="container">
-        <span class="hero-tag">Zero JVM • Zero Kafka • 50MB RAM</span>
+        <span class="hero-tag">Zero JVM • Zero Kafka • Sub-100MB Footprint</span>
         <h1>Stream Database Changes to Iceberg.<br>Instantly.</h1>
         <p>
           A single native Rust binary that streams WAL and Binlogs directly into Apache Iceberg REST Catalogs with sub-second commit latency.
@@ -154,8 +156,8 @@
             </p>
             <div class="arch-stats">
               <div class="stat-item">
-                <span class="stat-val" style="color: var(--accent-mint);">~50 MB</span>
-                <span class="stat-label">Memory</span>
+                <span class="stat-val" style="color: var(--accent-mint);">~35 - 80 MB</span>
+                <span class="stat-label">Memory (Typical)</span>
               </div>
               <div class="stat-item">
                 <span class="stat-val" style="color: var(--accent-mint);">&lt; 500ms</span>

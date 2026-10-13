@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="k-gradient-vert" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4ade80" />
+      <stop offset="60%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+    <linearGradient id="k-gradient-upper" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#a3e635" />
+    </linearGradient>
+    <linearGradient id="k-gradient-lower" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#047857" />
+    </linearGradient>
+  </defs>
+
+  <rect width="128" height="128" rx="28" fill="#0b1711" />
+  <rect width="126" height="126" x="1" y="1" rx="27" fill="none" stroke="#1d3d2b" stroke-width="1.5" />
+
+  <g>
+    <rect x="28" y="24" width="20" height="80" rx="10" fill="url(#k-gradient-vert)" />
+    <path d="M 52 58 L 82 28 C 86.5 23.5 93.5 24 97.5 28.5 C 101.5 33 101 40 96.5 44.5 L 68 70 Z" fill="url(#k-gradient-upper)" />
+    <path d="M 64 64 L 95.5 93.5 C 99.8 97.8 100 104.5 96 108.5 C 92 112.5 85.5 112 81 107.5 L 52 74 Z" fill="url(#k-gradient-lower)" />
+    <circle cx="56" cy="65" r="4.5" fill="#f0fdf4" />
+  </g>
+</svg>
