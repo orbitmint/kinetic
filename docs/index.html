@@ -5,7 +5,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Kinetic — Sub-second CDC into Apache Iceberg in a Single Binary</title>
   <meta name="description" content="Ultra-lightweight Rust CDC engine streaming PostgreSQL, MySQL, and MongoDB directly into Apache Iceberg REST Catalogs with 50MB RAM and zero external message brokers.">
-  <link rel="stylesheet" href="style.css">
+  
+  <!-- OpenGraph Meta Tags -->
+  <meta property="og:title" content="Kinetic — Sub-second CDC into Apache Iceberg">
+  <meta property="og:description" content="Single native Rust binary streaming PostgreSQL, MySQL, and MongoDB directly into Iceberg REST Catalogs with ~50MB RAM.">
+  <meta property="og:url" content="https://orbitmint.github.io/kinetic/">
+  <meta property="og:type" content="website">
+
+  <link rel="stylesheet" href="style.css?v=20261013-2">
+  <style>
+    /* Critical sticky navbar styles to guarantee sticky behavior across all browsers */
+    header {
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+      right: 0 !important;
+      width: 100% !important;
+      background: rgba(245, 249, 246, 0.98) !important;
+      backdrop-filter: blur(16px) !important;
+      -webkit-backdrop-filter: blur(16px) !important;
+      border-bottom: 1px solid #dbe8e0 !important;
+      box-shadow: 0 2px 10px rgba(14, 30, 22, 0.05) !important;
+      z-index: 999999 !important;
+    }
+    body {
+      padding-top: 72px !important;
+    }
+    section[id] {
+      scroll-margin-top: 84px !important;
+    }
+    .nav-link.active-nav {
+      color: #059669 !important;
+      font-weight: 700 !important;
+      border-bottom: 2px solid #059669;
+      padding-bottom: 2px;
+    }
+    @media (max-width: 820px) {
+      body { padding-top: 108px !important; }
+      section[id] { scroll-margin-top: 118px !important; }
+    }
+  </style>
 </head>
 <body>
 
@@ -21,6 +60,7 @@
           <a href="#features" class="nav-link">Features</a>
           <a href="#architecture" class="nav-link">Architecture</a>
           <a href="#quickstart" class="nav-link">Quickstart</a>
+          <a href="#configuration" class="nav-link">Config</a>
           <a href="https://github.com/orbitmint/kinetic" class="btn btn-secondary" target="_blank" rel="noopener">
             GitHub
           </a>
@@ -51,17 +91,20 @@
               <span class="dot dot-yellow"></span>
               <span class="dot dot-green"></span>
             </div>
-            <span class="terminal-title">bash — kinetic-daemon</span>
+            <span class="terminal-title">kinetic-daemon — streaming</span>
+            <button class="copy-btn" onclick="copySnippet('cargo run -- --cdc-source postgres', this)">
+              <span>Copy</span>
+            </button>
           </div>
           <div class="terminal-body">
             <div class="terminal-line"><span class="t-prompt">$ </span><span class="t-cmd">kinetic</span> --cdc-source postgres --iceberg-rest-url http://catalog:8181</div>
             <div class="terminal-line t-dim">2026-10-12T12:00:00Z  INFO Starting Kinetic CDC Engine (v0.1.0)</div>
-            <div class="terminal-line t-cyan">2026-10-12T12:00:00Z  INFO OpenTelemetry Prometheus metrics exporter listening on http://0.0.0.0:9090/metrics</div>
-            <div class="terminal-line t-dim">2026-10-12T12:00:01Z  INFO Connected and streaming logical replication from slot 'kinetic_slot'...</div>
+            <div class="terminal-line t-cyan">2026-10-12T12:00:00Z  INFO Prometheus metrics exporter listening on http://0.0.0.0:9090/metrics</div>
+            <div class="terminal-line t-dim">2026-10-12T12:00:01Z  INFO Streaming logical replication from slot 'kinetic_slot'...</div>
             <div class="terminal-line t-green">2026-10-12T12:00:01Z  INFO Flushing 5,000 rows for table 'users' (LSN: 0/16B2490)</div>
             <div class="terminal-line t-green">2026-10-12T12:00:01Z  INFO Uploaded Parquet to s3://warehouse/kinetic_data/users/4a7f-9b2c.parquet (142 KB)</div>
             <div class="terminal-line t-green">2026-10-12T12:00:01Z  INFO Committed DataFile to Iceberg table 'default.users' in 0.042s</div>
-            <div class="terminal-line t-cyan">2026-10-12T12:00:01Z  INFO Acknowledged flushed LSN to PostgreSQL walsender (Replication lag: 0 bytes)</div>
+            <div class="terminal-line t-cyan">2026-10-12T12:00:01Z  INFO Acknowledged LSN to PostgreSQL walsender (Replication lag: 0 bytes)</div>
           </div>
         </div>
       </div>
@@ -179,29 +222,163 @@
       </div>
     </section>
 
-    <!-- Quickstart Section -->
-    <section class="cta-section" id="quickstart">
+    <!-- Quickstart Section with Database Tabs -->
+    <section class="quickstart-section" id="quickstart">
       <div class="container">
-        <h2>Ready to Stream in 2 Minutes?</h2>
-        <p>Spin up the sample test stack with Docker Compose and experience sub-second Iceberg CDC on your laptop.</p>
-        
-        <div style="max-width: 650px; margin: 0 auto 28px; text-align: left;">
+        <div class="section-header">
+          <h2>Quickstart by Database</h2>
+          <p>Select your database source to view the exact setup and launch command.</p>
+        </div>
+
+        <!-- Database Tabs -->
+        <div class="tab-nav">
+          <button class="tab-btn active" onclick="switchTab('tab-pg', this)">PostgreSQL</button>
+          <button class="tab-btn" onclick="switchTab('tab-mysql', this)">MySQL</button>
+          <button class="tab-btn" onclick="switchTab('tab-mongo', this)">MongoDB</button>
+        </div>
+
+        <!-- Tab 1: PostgreSQL -->
+        <div id="tab-pg" class="tab-content active" style="max-width: 760px; margin: 0 auto;">
           <div class="terminal-card">
             <div class="terminal-header">
-              <span class="terminal-title">quickstart.sh</span>
+              <span class="terminal-title">quickstart-postgres.sh</span>
+              <button class="copy-btn" onclick="copySnippet('cargo run -- --cdc-source postgres --pg-url postgres://admin:password@localhost:5432/kinetic_db', this)">
+                <span>Copy</span>
+              </button>
             </div>
-            <div class="terminal-body" style="font-size: 0.85rem;">
-              <div class="terminal-line"><span class="t-dim"># 1. Clone the repo and start test services</span></div>
-              <div class="terminal-line"><span class="t-prompt">$ </span><span class="t-cmd">git clone https://github.com/orbitmint/kinetic.git && cd kinetic</span></div>
+            <div class="terminal-body">
+              <div class="terminal-line"><span class="t-dim"># 1. Start local cluster (Postgres 16, Iceberg REST, MinIO)</span></div>
               <div class="terminal-line"><span class="t-prompt">$ </span><span class="t-cmd">docker compose up -d</span></div>
-              <div class="terminal-line"><span class="t-dim"># 2. Seed test table</span></div>
+              <div class="terminal-line"><span class="t-dim"># 2. Seed test table and publication</span></div>
               <div class="terminal-line"><span class="t-prompt">$ </span><span class="t-cmd">docker compose exec -T postgres psql -U admin -d kinetic_db &lt; scripts/setup_test_db.sql</span></div>
-              <div class="terminal-line"><span class="t-dim"># 3. Launch Kinetic</span></div>
-              <div class="terminal-line"><span class="t-prompt">$ </span><span class="t-cmd">cargo run</span></div>
+              <div class="terminal-line"><span class="t-dim"># 3. Launch Kinetic with PostgreSQL CDC</span></div>
+              <div class="terminal-line"><span class="t-prompt">$ </span><span class="t-cmd">cargo run -- --cdc-source postgres --pg-url postgres://admin:password@localhost:5432/kinetic_db</span></div>
             </div>
           </div>
         </div>
 
+        <!-- Tab 2: MySQL -->
+        <div id="tab-mysql" class="tab-content" style="max-width: 760px; margin: 0 auto;">
+          <div class="terminal-card">
+            <div class="terminal-header">
+              <span class="terminal-title">quickstart-mysql.sh</span>
+              <button class="copy-btn" onclick="copySnippet('cargo run -- --cdc-source mysql --mysql-url mysql://admin:password@localhost:3306/', this)">
+                <span>Copy</span>
+              </button>
+            </div>
+            <div class="terminal-body">
+              <div class="terminal-line"><span class="t-dim"># 1. Ensure MySQL has binary logging enabled (binlog_format=ROW)</span></div>
+              <div class="terminal-line"><span class="t-prompt">$ </span><span class="t-cmd">mysql -u admin -p -e "SHOW VARIABLES LIKE 'binlog_format';"</span></div>
+              <div class="terminal-line"><span class="t-dim"># 2. Launch Kinetic with MySQL Binlog CDC</span></div>
+              <div class="terminal-line"><span class="t-prompt">$ </span><span class="t-cmd">cargo run -- --cdc-source mysql --mysql-url mysql://admin:password@localhost:3306/</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: MongoDB -->
+        <div id="tab-mongo" class="tab-content" style="max-width: 760px; margin: 0 auto;">
+          <div class="terminal-card">
+            <div class="terminal-header">
+              <span class="terminal-title">quickstart-mongo.sh</span>
+              <button class="copy-btn" onclick="copySnippet('cargo run -- --cdc-source mongo --mongo-uri mongodb://localhost:27017/?replicaSet=rs0 --mongo-db kinetic_db', this)">
+                <span>Copy</span>
+              </button>
+            </div>
+            <div class="terminal-body">
+              <div class="terminal-line"><span class="t-dim"># 1. Ensure MongoDB is running as a Replica Set</span></div>
+              <div class="terminal-line"><span class="t-prompt">$ </span><span class="t-cmd">mongosh --eval "rs.status().ok"</span></div>
+              <div class="terminal-line"><span class="t-dim"># 2. Launch Kinetic with MongoDB Change Streams</span></div>
+              <div class="terminal-line"><span class="t-prompt">$ </span><span class="t-cmd">cargo run -- --cdc-source mongo --mongo-uri mongodb://localhost:27017/?replicaSet=rs0 --mongo-db kinetic_db</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Configuration Reference Section -->
+    <section class="reference-section" id="configuration">
+      <div class="container">
+        <div class="section-header">
+          <h2>CLI & Configuration Reference</h2>
+          <p>Configure Kinetic via command-line arguments or environment variables.</p>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="ref-table">
+            <thead>
+              <tr>
+                <th>CLI Flag</th>
+                <th>Environment Variable</th>
+                <th>Default</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="flag-badge">--cdc-source</span></td>
+                <td><span class="env-badge">CDC_SOURCE</span></td>
+                <td><code>postgres</code></td>
+                <td>Source engine (<code>postgres</code>, <code>mysql</code>, <code>mongo</code>)</td>
+              </tr>
+              <tr>
+                <td><span class="flag-badge">--pg-url</span></td>
+                <td><span class="env-badge">PG_URL</span></td>
+                <td><code>postgres://...:5432/kinetic_db</code></td>
+                <td>PostgreSQL connection URL</td>
+              </tr>
+              <tr>
+                <td><span class="flag-badge">--mysql-url</span></td>
+                <td><span class="env-badge">MYSQL_URL</span></td>
+                <td><code>mysql://...:3306/</code></td>
+                <td>MySQL server connection URL</td>
+              </tr>
+              <tr>
+                <td><span class="flag-badge">--mongo-uri</span></td>
+                <td><span class="env-badge">MONGO_URI</span></td>
+                <td><code>mongodb://...:27017/?replicaSet=rs0</code></td>
+                <td>MongoDB connection URI with replica set</td>
+              </tr>
+              <tr>
+                <td><span class="flag-badge">--max-batch-size</span></td>
+                <td><span class="env-badge">MAX_BATCH_SIZE</span></td>
+                <td><code>5000</code></td>
+                <td>Record count threshold triggering Parquet flush</td>
+              </tr>
+              <tr>
+                <td><span class="flag-badge">--max-batch-timeout-ms</span></td>
+                <td><span class="env-badge">MAX_BATCH_TIMEOUT_MS</span></td>
+                <td><code>500</code></td>
+                <td>Timeout threshold in ms for sub-second commits</td>
+              </tr>
+              <tr>
+                <td><span class="flag-badge">--iceberg-rest-url</span></td>
+                <td><span class="env-badge">ICEBERG_REST_URL</span></td>
+                <td><code>http://localhost:8181</code></td>
+                <td>Apache Iceberg REST Catalog endpoint</td>
+              </tr>
+              <tr>
+                <td><span class="flag-badge">--s3-bucket</span></td>
+                <td><span class="env-badge">S3_BUCKET</span></td>
+                <td><code>warehouse</code></td>
+                <td>Target S3 / MinIO storage bucket name</td>
+              </tr>
+              <tr>
+                <td><span class="flag-badge">--metrics-addr</span></td>
+                <td><span class="env-badge">METRICS_ADDR</span></td>
+                <td><code>0.0.0.0:9090</code></td>
+                <td>Prometheus OpenTelemetry metrics HTTP listener</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="cta-section">
+      <div class="container">
+        <h2>Open Source & Built in Public</h2>
+        <p>Kinetic is licensed under Apache 2.0. Join the community, star the project, or contribute on GitHub.</p>
         <a href="https://github.com/orbitmint/kinetic" class="btn btn-primary" target="_blank" rel="noopener">Explore the GitHub Repository</a>
       </div>
     </section>
@@ -212,6 +389,55 @@
       <p>© 2026 Kinetic Project. Released under the Apache 2.0 License.</p>
     </div>
   </footer>
+
+  <!-- Interactive JavaScript for Tabs & Copy Buttons -->
+  <script>
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      btn.classList.add('active');
+    }
+
+    function copySnippet(text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<span>Copied! ✓</span>';
+        btn.style.color = '#34d399';
+        setTimeout(() => {
+          btn.innerHTML = originalText;
+          btn.style.color = '';
+        }, 2000);
+      });
+    }
+
+    // Active Navigation Highlight on Scroll
+    window.addEventListener('DOMContentLoaded', () => {
+      const navLinks = document.querySelectorAll('.nav-link');
+      const sections = document.querySelectorAll('section[id]');
+
+      function updateActiveNav() {
+        let current = '';
+        const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+        sections.forEach(section => {
+          const sectionTop = section.offsetTop - 120;
+          if (scrollPos >= sectionTop) {
+            current = section.getAttribute('id');
+          }
+        });
+
+        navLinks.forEach(link => {
+          link.classList.remove('active-nav');
+          if (current && link.getAttribute('href') === `#${current}`) {
+            link.classList.add('active-nav');
+          }
+        });
+      }
+
+      window.addEventListener('scroll', updateActiveNav, { passive: true });
+      updateActiveNav();
+    });
+  </script>
 
 </body>
 </html>
